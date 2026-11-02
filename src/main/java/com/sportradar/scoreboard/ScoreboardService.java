@@ -1,7 +1,6 @@
 package com.sportradar.scoreboard;
 
 import java.time.Clock;
-import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +12,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class ScoreboardService implements Scoreboard {
+
+    private static final String CLOCK_NULL_MESSAGE = "clock must not be null";
+    private static final String MATCH_NOT_FOUND_MESSAGE = "Match not found: %s";
 
     private static final Comparator<TrackedMatch> SUMMARY_ORDER = Comparator
             .comparingLong(TrackedMatch::totalScore)
@@ -29,7 +31,7 @@ public final class ScoreboardService implements Scoreboard {
     }
 
     public ScoreboardService(Clock clock) {
-        this.clock = Objects.requireNonNull(clock, "clock must not be null");
+        this.clock = Objects.requireNonNull(clock, CLOCK_NULL_MESSAGE);
     }
 
     @Override
@@ -79,30 +81,7 @@ public final class ScoreboardService implements Scoreboard {
 
     private static void requireFound(TrackedMatch tracked, UUID matchId) {
         if (tracked == null) {
-            throw new NoSuchElementException("Match not found: " + matchId);
-        }
-    }
-
-    private record TrackedMatch(Match match, long startSequence) {
-
-        long totalScore() {
-            return match.totalScore();
-        }
-
-        Instant startedAt() {
-            return match.startedAt();
-        }
-
-        boolean isInProgress() {
-            return match.isInProgress();
-        }
-
-        TrackedMatch withScore(int homeScore, int awayScore) {
-            return new TrackedMatch(match.withScore(homeScore, awayScore), startSequence);
-        }
-
-        TrackedMatch finished() {
-            return new TrackedMatch(match.finished(), startSequence);
+            throw new NoSuchElementException(MATCH_NOT_FOUND_MESSAGE.formatted(matchId));
         }
     }
 }

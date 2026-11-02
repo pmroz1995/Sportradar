@@ -1,6 +1,6 @@
 ---
 name: Java Pure Clean Code
-description: Write and review clean Plain Java 17+ code using Craftsmanship rules (SOLID, YAGNI, guard clauses, composition over inheritance) and AssertJ tests in Arrange/Act/Assert style. Use for implementing, refactoring, or reviewing Java code, especially in Plain Java Maven projects.
+description: Write and review clean Plain Java 17+ code using Craftsmanship rules (SOLID, YAGNI, guard clauses, composition over inheritance, one top-level type per file, no magic literals, null-safe guards) and AssertJ tests in Arrange/Act/Assert style. Use for implementing, refactoring, or reviewing Java code, especially in Plain Java Maven projects.
 ---
 
 # Java Pure Clean Code (Uncle Bob)
@@ -37,6 +37,12 @@ Plain Java 17+ with no code-generating libraries.
 8. **No `Optional<T>` as a method parameter.** Use `Optional` only as the
    return type of a query that may have no result.
 9. **Tests use `// Arrange`, `// Act`, `// Assert`** and AssertJ assertions.
+10. **One top-level type per file.** Never nest a record, enum, or helper class
+    inside another type; extract it to its own file.
+11. **No magic literals.** Every meaningful string or number becomes a
+    `private static final` constant with an intention-revealing name.
+12. **Null safety.** Guard reference parameters at the boundary, and compare
+    string literals from the literal side: `"text".equals(value)`.
 
 ## Methods and functions
 
@@ -162,6 +168,59 @@ public record Match(UUID id, String homeTeam, String awayTeam,
                     Instant startedAt) { }
 ```
 
+## File structure
+
+- **One top-level type per file.** Every record, enum, class, and interface
+  lives in its own file named after the type.
+- **No nested types.** Do not hide a helper record or class inside the type
+  that uses it. Extract it to a package-private top-level type in the same
+  package.
+- **Visibility follows the API.** Make the extracted type `public` only when it
+  is part of the published contract; otherwise keep it package-private so it
+  cannot leak out of the package.
+
+```java
+// Avoid: helper record buried inside the service
+public final class ScoreboardService implements Scoreboard {
+
+    private record TrackedMatch(Match match, long startSequence) { }
+}
+```
+
+```java
+// Prefer: package-private top-level type in TrackedMatch.java
+record TrackedMatch(Match match, long startSequence) {
+
+    TrackedMatch withScore(int homeScore, int awayScore) {
+        return new TrackedMatch(match.withScore(homeScore, awayScore), startSequence);
+    }
+}
+```
+
+## Magic literals
+
+- **No magic strings or numbers.** Give every repeated or meaningful literal a
+  `private static final` constant with an intention-revealing name, for example
+  `MATCH_NOT_FOUND_MESSAGE` or `MAX_RETRIES`.
+- **Error messages are literals too.** Keep the whole template in a constant
+  and fill it with `.formatted(...)`; do not concatenate fragments at the throw
+  site.
+- **Do not hoist test data.** Values such as `"Mexico"` or `10` in a test's
+  Arrange section document the scenario and stay local; only configuration and
+  message literals belong in constants.
+
+```java
+// Avoid: magic string and inline concatenation
+throw new NoSuchElementException("Match not found: " + matchId);
+```
+
+```java
+// Prefer: constant template filled at the throw site
+private static final String MATCH_NOT_FOUND_MESSAGE = "Match not found: %s";
+
+throw new NoSuchElementException(MATCH_NOT_FOUND_MESSAGE.formatted(matchId));
+```
+
 ## Naming and comments
 
 - **Code is documentation.** Prefer clear class, method, and variable names
@@ -189,6 +248,45 @@ void update(UUID id, Optional<Match> match);
   `IllegalStateException`, `NoSuchElementException`) over checked exceptions
   that pollute higher-layer signatures.
 - Validate at the boundary and fail fast with a precise message.
+
+## Null safety
+
+- **Guard reference parameters at the boundary.** Reject `null` with an
+  `IllegalArgumentException` and a precise message, or model absence with
+  `Optional` as a return type. A method must never throw `NullPointerException`
+  for input it could have validated.
+- **Put the literal first in string comparisons.** `"text".equals(value)` is
+  safe when `value` is `null`; `value.equals("text")` is not.
+- **Compare enums with `==`.** It is null-safe and never invokes a method on a
+  `null` reference.
+- **Use `Objects.equals(a, b)`** when both sides are variables that may be
+  `null`.
+- **Use `Objects.requireNonNull(..., message)` only for parameters of public
+  constructors and factories**, where `null` can come from outside. It fails
+  fast at the source with a clear message; it does not hide the error.
+- **Do not guard what cannot be null.** Internal and package-private types
+  built only from already validated values need no `requireNonNull`; extra
+  guards are dead code.
+- **Guard before instance calls.** After a null guard,
+  `value.equalsIgnoreCase(other)` is safe; without it, guard both sides first.
+- **Never unbox a nullable wrapper implicitly.** Check for `null` before
+  assigning an `Integer`, `Long`, or `Boolean` to a primitive.
+
+```java
+// Avoid: NPE when value is null
+if (value.equals("active")) { ... }
+
+// Prefer: literal-first comparison
+if ("active".equals(value)) { ... }
+
+// Avoid: NPE when either team is null
+if (homeTeam.equalsIgnoreCase(awayTeam)) { ... }
+
+// Prefer: guard both sides, then compare
+requireTeamName(homeTeam);
+requireTeamName(awayTeam);
+if (homeTeam.equalsIgnoreCase(awayTeam)) { ... }
+```
 
 ## Concurrency (when state is shared)
 
@@ -243,6 +341,13 @@ Before considering Java code done, verify:
 - [ ] No `final` on method parameters.
 - [ ] No `Optional` in method parameters; `Optional` only as a return type.
 - [ ] No `null` returns; unchecked exceptions with clear messages.
+- [ ] One top-level type per file; no nested records or helper classes.
+- [ ] Extracted helper types are package-private unless they are public API.
+- [ ] No magic strings or numbers; meaningful literals are `private static final`.
+- [ ] Error messages are constants filled with `.formatted(...)`.
+- [ ] Reference parameters are guarded; no method NPEs on `null` input.
+- [ ] String comparisons are literal-first (`"text".equals(value)`).
+- [ ] Public constructors and factories reject `null` parameters with `Objects.requireNonNull`; no redundant guards on internal types.
 - [ ] YAGNI respected; no speculative abstractions.
 - [ ] No commented-out code or dead code.
 - [ ] Tests use Arrange/Act/Assert and AssertJ.

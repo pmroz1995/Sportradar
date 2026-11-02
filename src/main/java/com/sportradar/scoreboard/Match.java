@@ -12,6 +12,8 @@ public record Match(
         MatchStatus status,
         Instant startedAt) {
 
+    private static final String ALREADY_FINISHED_MESSAGE = "Match %s has already finished";
+
     static Match started(UUID id, String homeTeam, String awayTeam, Instant startedAt) {
         return new Match(id, homeTeam, awayTeam, 0, 0, MatchStatus.IN_PROGRESS, startedAt);
     }
@@ -36,7 +38,7 @@ public record Match(
 
     private void requireInProgress() {
         if (!isInProgress()) {
-            throw new IllegalStateException("Match " + id + " has already finished");
+            throw new IllegalStateException(ALREADY_FINISHED_MESSAGE.formatted(id));
         }
     }
 }
