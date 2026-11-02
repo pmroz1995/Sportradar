@@ -29,7 +29,7 @@ Prompts are paraphrased in chronological order; only the substance is kept.
 
 ## Contextual information given to the AI
 
-- The original exercise text (kept as `PROMPT.md`, with the agreed decisions appended).
+- The original exercise text (kept as `PROMPT.md` next to this file, with the agreed decisions appended).
 - The decisions: plain Maven library, Java 17, `ConcurrentHashMap` + atomic `compute`, `getMatchById` as the single additional operation, a separate commit for it, `README.md` and `AI.md` as deliverables.
 - The clean code skill (below).
 
@@ -37,7 +37,7 @@ Prompts are paraphrased in chronological order; only the substance is kept.
 
 | Artifact | Role |
 | --- | --- |
-| `PROMPT.md` | The exercise requirements and the agreed implementation decisions. |
+| `.opencode/skills/java-pure-clean-code-uncle-bob/PROMPT.md` | The exercise requirements and the agreed implementation decisions. |
 | `.opencode/skills/java-pure-clean-code-uncle-bob/SKILL.md` | Coding and testing rules the implementation was written and reviewed against. |
 | `README.md` | Design reasoning, assumptions, trade-offs and the additional feature, written alongside the code. |
 

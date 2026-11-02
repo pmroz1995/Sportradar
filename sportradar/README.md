@@ -33,6 +33,10 @@ scoreboard.finishMatch(match.id());
 Optional<Match> historicalMatch = scoreboard.getMatchById(match.id());
 ```
 
+## AI usage and exercise prompt
+
+The AI usage summary and prompt history are in [`AI.md`](.opencode/skills/java-pure-clean-code-uncle-bob/AI.md). The exercise requirements and the implementation decisions agreed before coding are in [`PROMPT.md`](.opencode/skills/java-pure-clean-code-uncle-bob/PROMPT.md). Both sit next to the clean code skill ([`SKILL.md`](.opencode/skills/java-pure-clean-code-uncle-bob/SKILL.md)) that guided the implementation.
+
 ## Design and reasoning
 
 - **Small public API:** `Scoreboard` defines the supported operations; `ScoreboardService` is the in-memory implementation.
@@ -77,7 +81,9 @@ Optional<Match> historicalMatch = scoreboard.getMatchById(match.id());
 .opencode/
   skills/
     java-pure-clean-code-uncle-bob/
-      SKILL.md
+      AI.md          AI usage summary, prompt history and guiding artifacts
+      PROMPT.md      Exercise requirements and agreed implementation decisions
+      SKILL.md       Clean code skill the implementation was written against
 src/
   main/java/com/sportradar/scoreboard/
     Match.java
@@ -90,8 +96,8 @@ src/
     MutableClock.java
     ScoreboardServiceConcurrencyTest.java
     ScoreboardServiceTest.java
-README.md
-AI.md
-PROMPT.md
+mvnw
+mvnw.cmd
 pom.xml
+README.md
 ```
