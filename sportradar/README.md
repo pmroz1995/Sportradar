@@ -91,6 +91,7 @@ src/
     ScoreboardServiceConcurrencyTest.java
     ScoreboardServiceTest.java
 README.md
+AI.md
 PROMPT.md
 pom.xml
 ```
