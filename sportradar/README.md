@@ -8,6 +8,7 @@ A small Java 17 library for managing multiple simultaneous football matches. It 
 - Update the score of an in-progress match.
 - Finish a match.
 - Return an immutable summary of in-progress matches ordered by total score (descending), then start time (newest first).
+- One additional operation: retrieve a match by its UUID, including after it has finished.
 
 ## Build and test
 
@@ -28,6 +29,8 @@ scoreboard.updateScore(match.id(), 0, 5);
 
 List<Match> liveMatches = scoreboard.getSummary();
 scoreboard.finishMatch(match.id());
+
+Optional<Match> historicalMatch = scoreboard.getMatchById(match.id());
 ```
 
 ## Design and reasoning
@@ -53,6 +56,12 @@ scoreboard.finishMatch(match.id());
 - Invalid names, negative scores, and null identifiers throw `IllegalArgumentException`. A rejected call never changes the scoreboard.
 - The summary is a snapshot: callers receive an unmodifiable list that does not change when the scoreboard changes afterwards.
 
+## Additional feature: lookup by match ID
+
+`Optional<Match> getMatchById(UUID)` returns a match whether it is in progress or already finished, and an empty `Optional` for an unknown id. A null id is rejected with `IllegalArgumentException`.
+
+**Why this feature:** the summary only lists live matches, so a consumer that needs the final result of a match, or wants to reconcile a single event from an upstream feed, would otherwise have to track every `Match` it ever received. Looking a match up by id is the most common follow-up to `startMatch`, which hands out the id. It is also cheap and safe here: finished matches are already retained for lifecycle checks, so the feature adds no new state, only a read-only view of it. An `Optional` return value makes "not found" explicit without exposing `null` or throwing for a normal query.
+
 ## Trade-offs and future considerations
 
 - **In-memory only:** State is lost when the process stops. Persistence and distributed consistency are outside this exercise's scope.
@@ -60,7 +69,7 @@ scoreboard.finishMatch(match.id());
 - **Finished matches are never evicted:** Memory grows with the number of matches played. An eviction policy would be needed for a long-running process; it is not required here.
 - **UUID identifiers:** Convenient for independent callers and distributed systems, but less human-friendly than a domain-specific match number.
 - **No event history:** Only the latest score is stored. An audit or event stream would be appropriate for replay and correction workflows but is not required here.
-- **No deletion operation:** The public API intentionally stays limited to the required operations.
+- **No deletion operation:** The public API intentionally stays limited to the required operations plus exactly one additional operation.
 
 ## Project structure
 

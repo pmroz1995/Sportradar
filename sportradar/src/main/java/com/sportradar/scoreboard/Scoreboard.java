@@ -1,6 +1,7 @@
 package com.sportradar.scoreboard;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface Scoreboard {
@@ -35,4 +36,11 @@ public interface Scoreboard {
      * start time (most recently started first).
      */
     List<Match> getSummary();
+
+    /**
+     * Looks up a match by id, whether it is in progress or has already finished.
+     *
+     * @throws IllegalArgumentException if the id is null
+     */
+    Optional<Match> getMatchById(UUID matchId);
 }

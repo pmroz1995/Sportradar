@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -393,6 +394,63 @@ class ScoreboardServiceTest {
             assertThat(summary).singleElement()
                     .extracting(Match::homeScore, Match::awayScore)
                     .containsExactly(0, 0);
+        }
+    }
+
+    @Nested
+    class GetMatchById {
+
+        @Test
+        void shouldReturnMatchInProgressWithLatestScore() {
+            // Arrange
+            Match match = scoreboard.startMatch("Mexico", "Canada");
+            scoreboard.updateScore(match.id(), 0, 5);
+
+            // Act
+            Optional<Match> found = scoreboard.getMatchById(match.id());
+
+            // Assert
+            assertThat(found).get()
+                    .extracting(Match::homeScore, Match::awayScore, Match::status)
+                    .containsExactly(0, 5, MatchStatus.IN_PROGRESS);
+        }
+
+        @Test
+        void shouldReturnFinishedMatchWithFinalScore() {
+            // Arrange
+            Match match = scoreboard.startMatch("Mexico", "Canada");
+            scoreboard.updateScore(match.id(), 2, 1);
+            scoreboard.finishMatch(match.id());
+
+            // Act
+            Optional<Match> found = scoreboard.getMatchById(match.id());
+
+            // Assert
+            assertThat(found).get()
+                    .extracting(Match::homeScore, Match::awayScore, Match::status)
+                    .containsExactly(2, 1, MatchStatus.FINISHED);
+        }
+
+        @Test
+        void shouldReturnEmptyForUnknownMatch() {
+            // Arrange
+            scoreboard.startMatch("Mexico", "Canada");
+
+            // Act
+            Optional<Match> found = scoreboard.getMatchById(UUID.randomUUID());
+
+            // Assert
+            assertThat(found).isEmpty();
+        }
+
+        @Test
+        void shouldRejectNullMatchId() {
+            // Arrange
+            // Act
+            Throwable thrown = catchThrowable(() -> scoreboard.getMatchById(null));
+
+            // Assert
+            assertThat(thrown).isInstanceOf(IllegalArgumentException.class);
         }
     }
 

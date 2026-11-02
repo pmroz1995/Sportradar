@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -67,6 +68,13 @@ public final class ScoreboardService implements Scoreboard {
                 .sorted(SUMMARY_ORDER)
                 .map(TrackedMatch::match)
                 .toList();
+    }
+
+    @Override
+    public Optional<Match> getMatchById(UUID matchId) {
+        MatchValidator.requireMatchId(matchId);
+
+        return Optional.ofNullable(matches.get(matchId)).map(TrackedMatch::match);
     }
 
     private static void requireFound(TrackedMatch tracked, UUID matchId) {
